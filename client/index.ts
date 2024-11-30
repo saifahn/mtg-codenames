@@ -8,6 +8,14 @@ ws.onopen = () => {
     username,
   };
   ws.send(JSON.stringify(loginRequestMessage));
+
+  const room = prompt('What room would you like to join?');
+  const roomRequestMessage = {
+    type: 'joinRoom',
+    username,
+    room,
+  };
+  ws.send(JSON.stringify(roomRequestMessage));
 };
 
 ws.onmessage = (event) => {
