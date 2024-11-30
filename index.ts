@@ -3,20 +3,20 @@ const server = Bun.serve({
   fetch(req) {
     const success = server.upgrade(req);
     if (success) {
-      // Bun automatically returns a 101 Switching Protocols
-      // if the upgrade succeeds
       return undefined;
     }
 
     return new Response('hi');
   },
   websocket: {
-    open() {
+    open(ws) {
       console.log('connection opened');
+      ws.subscribe('main-room');
+      server.publish('main-room', 'message to everyone');
     },
     async message(ws, message) {
       console.log(`Received ${message}`);
-      ws.send(`You said: ${message}`);
+      server.publish('main-room', `one of the users said: ${message}`);
     },
   },
 });
