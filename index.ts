@@ -11,12 +11,22 @@ const server = Bun.serve({
   websocket: {
     open(ws) {
       console.log('connection opened');
-      ws.subscribe('main-room');
-      server.publish('main-room', 'message to everyone');
     },
     async message(ws, message) {
-      console.log(`Received ${message}`);
-      server.publish('main-room', `one of the users said: ${message}`);
+      if (typeof message !== 'string') {
+        console.log('server only accepts strings');
+        return;
+      }
+
+      try {
+        const parsedMsg = JSON.parse(message);
+        const { type } = parsedMsg;
+        if (type === 'login') {
+          console.log(`${parsedMsg.username} has logged in`);
+        }
+      } catch (err) {
+        console.log(err);
+      }
     },
   },
 });

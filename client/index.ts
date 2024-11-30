@@ -1,14 +1,19 @@
-const exampleSocket = new WebSocket('ws://localhost:3000');
+const ws = new WebSocket('ws://localhost:3000');
 
-exampleSocket.onopen = (event) => {
-  console.log('connection to server opened');
-  exampleSocket.send('Hi server from client 1');
+ws.onopen = () => {
+  console.log('connected to server');
+  const username = prompt('What is your username?');
+  const loginRequestMessage = {
+    type: 'login',
+    username,
+  };
+  ws.send(JSON.stringify(loginRequestMessage));
 };
 
-exampleSocket.onmessage = (event) => {
+ws.onmessage = (event) => {
   console.log(`message from server: ${event.data}`);
 };
 
-exampleSocket.onclose = (event) => {
+ws.onclose = (event) => {
   console.log('connection to server closed');
 };
