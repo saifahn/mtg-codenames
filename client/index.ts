@@ -1,27 +1,26 @@
-const ws = new WebSocket('ws://localhost:3000');
+const ws = new WebSocket('ws://localhost:3000')
 
 ws.onopen = () => {
-  console.log('connected to server');
-  const username = prompt('What is your username?');
+  console.log('connected to server')
+  const username = prompt('What is your username?')
   const loginRequestMessage = {
-    type: 'login',
+    action: 'login',
     username,
-  };
-  ws.send(JSON.stringify(loginRequestMessage));
-
-  const room = prompt('What room would you like to join?');
-  const roomRequestMessage = {
-    type: 'joinRoom',
-    username,
-    room,
-  };
-  ws.send(JSON.stringify(roomRequestMessage));
-};
+  }
+  ws.send(JSON.stringify(loginRequestMessage))
+}
 
 ws.onmessage = (event) => {
-  console.log(`message from server: ${event.data}`);
-};
+  if (typeof event.data !== 'string') {
+    console.log('received an unexpected Buffer')
+    return
+  }
+  const serverState = JSON.parse(event.data)
+  if (serverState.game === null) {
+    console.log('There is no game in progress')
+  }
+}
 
 ws.onclose = (event) => {
-  console.log('connection to server closed');
-};
+  console.log('connection to server closed')
+}

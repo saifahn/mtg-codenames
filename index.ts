@@ -6,6 +6,16 @@ interface RoomsObject {
 
 const rooms: RoomsObject = {}
 
+interface NoGameState {
+  game: null
+}
+
+type GameState = NoGameState
+
+const state: GameState = {
+  game: null,
+}
+
 const server = Bun.serve({
   port: 3000,
   fetch(req) {
@@ -17,8 +27,13 @@ const server = Bun.serve({
     return new Response('hi')
   },
   websocket: {
-    open() {
+    open(socket) {
       console.log('connection opened')
+      socket.subscribe('game')
+    },
+    close(socket) {
+      console.log('a connection was closed')
+      socket.unsubscribe('game')
     },
     async message(socket, message) {
       if (typeof message !== 'string') {
@@ -28,26 +43,12 @@ const server = Bun.serve({
 
       try {
         const parsedMsg = JSON.parse(message)
-        const { type } = parsedMsg
-        if (type === 'login') {
-          console.log(`${parsedMsg.username} has logged in`)
-        }
-        if (type === 'joinRoom') {
-          const { room, username } = parsedMsg
-          if (!rooms[room]) {
-            rooms[room] = {}
+        const { action } = parsedMsg
+        if (action === 'login') {
+          console.log(`LOG: ${parsedMsg.username} has logged in`)
+          if (state.game === null) {
+            socket.send(JSON.stringify(state))
           }
-          if (!rooms[room][username]) {
-            rooms[room][username] = true
-          }
-          console.log(rooms)
-          server.publish(
-            room,
-            `broadcasting to users in ${room}: ${username} has joined`
-          )
-          socket.subscribe(room)
-          console.log(`LOGGING: ${username} has joined ${room}`)
-          socket.send(`You have joined ${room}`)
         }
       } catch (err) {
         console.log(err)
