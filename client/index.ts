@@ -59,6 +59,12 @@ ws.onmessage = (event) => {
       }
       return
     }
+
+    if (message.game.status === 'inProgress') {
+      console.log(`The ${message.game.goesFirst} team goes first`)
+      console.log('Here is the game board:\n', message.game.board)
+      return
+    }
   }
 }
 
