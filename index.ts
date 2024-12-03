@@ -1,26 +1,4 @@
-interface NoGameState {
-  game: null
-}
-
-type Team = 'uw' | 'rb'
-
-type CardIdentity = Team | 'assassin' | 'neutral'
-
-interface BoardSpace {
-  word: string
-  identity: CardIdentity
-  flipped: boolean
-}
-
-interface GameBaseState {
-  board: BoardSpace[][]
-  goesFirst: Team
-  currentTurn: Team
-  status: 'ready' | 'inProgress' | 'finished'
-  // add logged in users and users by team
-}
-
-export type GameState = NoGameState | { game: GameBaseState }
+import { GameState, BoardSpace, GameBaseState } from './shared/types'
 
 const state: GameState = {
   game: null,
@@ -137,6 +115,7 @@ const server = Bun.serve({
         if (action === 'createNewGame') {
           createNewGame()
           socket.send('GAME_CREATED')
+          server.publish('game', JSON.stringify(state))
         }
 
         if (action === 'startGame') {
