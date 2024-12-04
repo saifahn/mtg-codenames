@@ -1,6 +1,7 @@
 <script lang="ts">
+  import AzoriusWatermark from '$lib/assets/azorius.svg?raw';
+  import RakdosWatermark from '$lib/assets/rakdos.svg?raw';
   import { onMount } from 'svelte';
-
   import { type GameState } from '../../../shared/types';
 
   let currentState = $state<'loading' | 'noGame' | 'gameWaitingToBeStarted' | 'gameInProgress'>(
@@ -74,23 +75,41 @@
   });
 
   function createNewGame() {
-    console.log('createNewGame called');
     if (!ws) return;
-    console.log('send the action of creating a new game');
     ws.send(JSON.stringify({ action: 'createNewGame' }));
   }
 </script>
 
-<h1 class="pt-4 text-xl">Welcome to Cardnames</h1>
 {#if currentState === 'loading'}
   <p>Loading...</p>
 {:else if currentState === 'noGame'}
   <p>There is no game currently in progress. Would you like to create a new game?</p>
   <button onclick={createNewGame}>Create game</button>
-{:else if currentState === 'gameWaitingToBeStarted'}
-  <p>There is a game waiting to be started. Would you like to begin?</p>
-  <h2 class="py-4 text-xl">Game details:</h2>
-  <h3 class="py-2 text-lg">Board:</h3>
+{:else}
+  {#if currentState === 'gameWaitingToBeStarted'}
+    <div class="mb-4 flex items-center gap-2 p-4 dark:bg-slate-700 dark:shadow-slate-300">
+      <p class="flex-grow">There is a game waiting to be started. Would you like to begin?</p>
+      <button class="rounded-md bg-sky-700 px-4 py-2">Start game</button>
+    </div>
+  {/if}
+  <div class="mb-3 flex gap-4">
+    <div class="border p-4">
+      {#if currentState === 'gameWaitingToBeStarted'}
+        <h3 class="text-lg">Goes first:</h3>
+      {:else}
+        <h3 class="text-lg">Current turn:</h3>
+      {/if}
+      {@html gameState!.currentTurn === 'rb' ? RakdosWatermark : AzoriusWatermark}
+    </div>
+    <div class="border p-4">
+      {@html RakdosWatermark}
+      <p>9 cards to find</p>
+    </div>
+    <div class="border p-4">
+      {@html AzoriusWatermark}
+      <p>8 cards to find</p>
+    </div>
+  </div>
   <div class="grid grid-cols-5 gap-2">
     {#each gameState!.board as row}
       {#each row as space}
@@ -102,10 +121,4 @@
       {/each}
     {/each}
   </div>
-  <h3 class="py-2 text-lg">Team that goes first:</h3>
-  <p>{gameState!.goesFirst}</p>
-  <h3 class="py-2 text-lg">Team whose turn it is:</h3>
-  <p>{gameState!.currentTurn}</p>
-{:else if currentState === 'gameInProgress'}
-  <p>The game is in progress. Here is the game board:</p>
 {/if}
