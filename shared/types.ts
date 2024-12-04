@@ -4,7 +4,7 @@ interface NoGameState {
 
 export type Team = 'uw' | 'rb'
 
-type CardIdentity = Team | 'assassin' | 'neutral'
+export type CardIdentity = Team | 'assassin' | 'neutral'
 
 export interface BoardSpace {
   word: string

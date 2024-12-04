@@ -1,4 +1,9 @@
-import { GameState, BoardSpace, GameBaseState } from './shared/types'
+import {
+  GameState,
+  BoardSpace,
+  GameBaseState,
+  CardIdentity,
+} from './shared/types'
 
 const state: GameState = {
   game: null,
@@ -37,16 +42,24 @@ function createNewGame() {
     assassin: 1,
   }
 
+  const availableIdentities: CardIdentity[] = [
+    'uw',
+    'rb',
+    'neutral',
+    'assassin',
+  ]
+
   let row = 0
 
   for (const card of cards) {
-    // pick an identity at random from remaining identities
-    const identities: CardIdentity[] = ['uw', 'rb', 'neutral', 'assassin']
-    const identity = identities[Math.floor(Math.random() * identities.length)]
+    const identity =
+      availableIdentities[
+        Math.floor(Math.random() * availableIdentities.length)
+      ]
 
     cardsByIdentity[identity] -= 1
-    if (cardsByIdentity[identity] === 0) {
-      identities.splice(identities.indexOf(identity), 1)
+    if (cardsByIdentity[identity] < 1) {
+      availableIdentities.splice(availableIdentities.indexOf(identity), 1)
     }
 
     const space: BoardSpace = {
