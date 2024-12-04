@@ -39,13 +39,10 @@
       }
 
       if (event.data === 'GAME_CREATED') {
-        alert('The game has been created');
-        // gameState = message.game;
         return;
       }
 
       if (event.data === 'GAME_STARTED') {
-        alert('The game has started');
         return;
       }
 
@@ -78,18 +75,33 @@
     if (!ws) return;
     ws.send(JSON.stringify({ action: 'createNewGame' }));
   }
+
+  function startGame() {
+    if (!ws) return;
+    ws.send(JSON.stringify({ action: 'startGame' }));
+  }
 </script>
 
 {#if currentState === 'loading'}
   <p>Loading...</p>
 {:else if currentState === 'noGame'}
-  <p>There is no game currently in progress. Would you like to create a new game?</p>
-  <button onclick={createNewGame}>Create game</button>
+  <div class="mb-4 flex items-center gap-2 p-4 dark:bg-slate-700 dark:shadow-slate-300">
+    <p class="flex-grow">There is no game currently in progress. Would you like to create a new game?</p>
+    <button
+      class="rounded-md bg-sky-700 px-4 py-2 hover:bg-sky-800 active:bg-sky-600"
+      onclick={createNewGame}>Create game</button
+    >
+  </div>
 {:else}
   {#if currentState === 'gameWaitingToBeStarted'}
     <div class="mb-4 flex items-center gap-2 p-4 dark:bg-slate-700 dark:shadow-slate-300">
       <p class="flex-grow">There is a game waiting to be started. Would you like to begin?</p>
-      <button class="rounded-md bg-sky-700 px-4 py-2">Start game</button>
+      <button
+        onclick={startGame}
+        class="rounded-md bg-sky-700 px-4 py-2 hover:bg-sky-800 active:bg-sky-600"
+      >
+        Start game
+      </button>
     </div>
   {/if}
   <div class="mb-3 flex gap-4">
