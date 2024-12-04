@@ -1,26 +1,9 @@
-interface NoGameState {
-  game: null
-}
-
-type Team = 'uw' | 'rb'
-
-type CardIdentity = Team | 'assassin' | 'neutral'
-
-interface BoardSpace {
-  word: string
-  identity: CardIdentity
-  flipped: boolean
-}
-
-interface GameBaseState {
-  board: BoardSpace[][]
-  goesFirst: Team
-  currentTurn: Team
-  status: 'ready' | 'inProgress' | 'finished'
-  // add logged in users and users by team
-}
-
-export type GameState = NoGameState | { game: GameBaseState }
+import {
+  GameState,
+  BoardSpace,
+  GameBaseState,
+  CardIdentity,
+} from './shared/types'
 
 const state: GameState = {
   game: null,
@@ -59,16 +42,24 @@ function createNewGame() {
     assassin: 1,
   }
 
+  const availableIdentities: CardIdentity[] = [
+    'uw',
+    'rb',
+    'neutral',
+    'assassin',
+  ]
+
   let row = 0
 
   for (const card of cards) {
-    // pick an identity at random from remaining identities
-    const identities: CardIdentity[] = ['uw', 'rb', 'neutral', 'assassin']
-    const identity = identities[Math.floor(Math.random() * identities.length)]
+    const identity =
+      availableIdentities[
+        Math.floor(Math.random() * availableIdentities.length)
+      ]
 
     cardsByIdentity[identity] -= 1
-    if (cardsByIdentity[identity] === 0) {
-      identities.splice(identities.indexOf(identity), 1)
+    if (cardsByIdentity[identity] < 1) {
+      availableIdentities.splice(availableIdentities.indexOf(identity), 1)
     }
 
     const space: BoardSpace = {
@@ -136,12 +127,11 @@ const server = Bun.serve({
 
         if (action === 'createNewGame') {
           createNewGame()
-          socket.send('GAME_CREATED')
+          server.publish('game', JSON.stringify(state))
         }
 
         if (action === 'startGame') {
           startGame()
-          server.publish('game', 'GAME_STARTED')
           server.publish('game', JSON.stringify(state))
         }
       } catch (err) {
