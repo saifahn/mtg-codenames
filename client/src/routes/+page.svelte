@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
 
-  import { type GameBaseState, type GameState } from '../../../shared/types';
+  import { type GameState } from '../../../shared/types';
 
   let currentState = $state<'loading' | 'noGame' | 'gameWaitingToBeStarted' | 'gameInProgress'>(
     'loading'
@@ -68,7 +68,7 @@
       }
     };
 
-    ws.onclose = (event) => {
+    ws.onclose = () => {
       console.log('connection to server closed');
     };
   });
@@ -91,11 +91,17 @@
   <p>There is a game waiting to be started. Would you like to begin?</p>
   <h2 class="py-4 text-xl">Game details:</h2>
   <h3 class="py-2 text-lg">Board:</h3>
-  {#each gameState!.board as row}
-    {#each row as space}
-      <p>word: {space.word}, flipped: {space.flipped}, belongsTo: {space.identity}</p>
+  <div class="grid grid-cols-5 gap-2">
+    {#each gameState!.board as row}
+      {#each row as space}
+        <div class="rounded-lg border border-slate-200 p-8 hover:border-slate-400">
+          <h4 class="mb-2 font-semibold">{space.word}</h4>
+          <p>flipped: {space.flipped}</p>
+          <p>belongsTo: {space.identity}</p>
+        </div>
+      {/each}
     {/each}
-  {/each}
+  </div>
   <h3 class="py-2 text-lg">Team that goes first:</h3>
   <p>{gameState!.goesFirst}</p>
   <h3 class="py-2 text-lg">Team whose turn it is:</h3>
