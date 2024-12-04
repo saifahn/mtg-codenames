@@ -38,7 +38,6 @@
         return;
       }
 
-
       // TODO: validate with a package like zod?
       const message = JSON.parse(event.data);
 
@@ -79,7 +78,9 @@
   <p>Loading...</p>
 {:else if currentState === 'noGame'}
   <div class="mb-4 flex items-center gap-2 p-4 dark:bg-slate-700 dark:shadow-slate-300">
-    <p class="flex-grow">There is no game currently in progress. Would you like to create a new game?</p>
+    <p class="flex-grow">
+      There is no game currently in progress. Would you like to create a new game?
+    </p>
     <button
       class="rounded-md bg-sky-700 px-4 py-2 hover:bg-sky-800 active:bg-sky-600"
       onclick={createNewGame}>Create game</button
@@ -125,5 +126,11 @@
         </div>
       {/each}
     {/each}
+  </div>
+  <div class="mt-4">
+    <button
+      class="rounded-md bg-rose-700 px-4 py-2 hover:bg-rose-800 active:bg-rose-600"
+      onclick={createNewGame}>Reset and create new game</button
+    >
   </div>
 {/if}
