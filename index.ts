@@ -127,13 +127,11 @@ const server = Bun.serve({
 
         if (action === 'createNewGame') {
           createNewGame()
-          socket.send('GAME_CREATED')
           server.publish('game', JSON.stringify(state))
         }
 
         if (action === 'startGame') {
           startGame()
-          server.publish('game', 'GAME_STARTED')
           server.publish('game', JSON.stringify(state))
         }
       } catch (err) {

@@ -38,13 +38,6 @@
         return;
       }
 
-      if (event.data === 'GAME_CREATED') {
-        return;
-      }
-
-      if (event.data === 'GAME_STARTED') {
-        return;
-      }
 
       // TODO: validate with a package like zod?
       const message = JSON.parse(event.data);
