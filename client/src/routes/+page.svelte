@@ -7,9 +7,10 @@
   let currentState = $state<'loading' | 'noGame' | 'gameWaitingToBeStarted' | 'gameInProgress'>(
     'loading'
   );
-  let ws = $state<WebSocket | null>(null);
-
   let gameState = $state<GameState['game']>(null);
+  let showingOperativeView = $state(true);
+
+  let ws = $state<WebSocket | null>(null);
 
   onMount(() => {
     ws = new WebSocket('ws://localhost:3000');
@@ -122,15 +123,23 @@
         <div class="rounded-lg border border-slate-200 p-8 hover:border-slate-400">
           <h4 class="mb-2 font-semibold">{space.word}</h4>
           <p>flipped: {space.flipped}</p>
-          <p>belongsTo: {space.identity}</p>
+          {#if !showingOperativeView}
+            <p>belongsTo: {space.identity}</p>
+          {/if}
         </div>
       {/each}
     {/each}
   </div>
-  <div class="mt-4">
+  <div class="mt-4 flex gap-2">
     <button
-      class="rounded-md bg-rose-700 px-4 py-2 hover:bg-rose-800 active:bg-rose-600"
+      class="rounded border border-rose-600 px-4 py-2 text-rose-300 hover:border-rose-700 hover:text-rose-400 active:border-rose-500"
       onclick={createNewGame}>Reset and create new game</button
     >
+    <button
+      class="rounded border px-4 py-2 hover:border-slate-500 active:border-slate-400 active:text-slate-400"
+      onclick={() => (showingOperativeView = !showingOperativeView)}
+    >
+      Switch to {showingOperativeView ? 'Spymaster' : 'Operative'} view
+    </button>
   </div>
 {/if}
