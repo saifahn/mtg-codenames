@@ -17,6 +17,10 @@ export interface GameBaseState {
   goesFirst: Team
   currentTurn: Team
   status: 'ready' | 'inProgress' | 'finished'
+  clue: {
+    word: string
+    number: number | null
+  }
   // add logged in users and users by team
 }
 
