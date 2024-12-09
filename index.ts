@@ -79,6 +79,10 @@ function createNewGame() {
     goesFirst,
     currentTurn,
     status: 'ready',
+    clue: {
+      word: '',
+      number: null,
+    },
   }
   state.game = game
 }
@@ -132,6 +136,16 @@ const server = Bun.serve({
 
         if (action === 'startGame') {
           startGame()
+          server.publish('game', JSON.stringify(state))
+        }
+
+        if (action === 'submitClue') {
+          if (!state.game) {
+            console.error('clue action was received when there was no game')
+            return
+          }
+          console.log('clue was received', parsedMsg.clue)
+          state.game.clue = parsedMsg.clue
           server.publish('game', JSON.stringify(state))
         }
       } catch (err) {

@@ -12,6 +12,11 @@
 
   let ws = $state<WebSocket | null>(null);
 
+  const NUMBER_OPTIONS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '∞'];
+
+  let clueBeingInput = $state('');
+  let selectedNumber = $state();
+
   onMount(() => {
     ws = new WebSocket('ws://localhost:3000');
 
@@ -73,6 +78,22 @@
     if (!ws) return;
     ws.send(JSON.stringify({ action: 'startGame' }));
   }
+
+  function handleSubmit(e: Event) {
+    e.preventDefault();
+    if (!ws) return;
+    ws.send(
+      JSON.stringify({
+        action: 'submitClue',
+        clue: {
+          word: clueBeingInput,
+          number: selectedNumber
+        }
+      })
+    );
+    selectedNumber = null;
+    clueBeingInput = '';
+  }
 </script>
 
 {#if currentState === 'loading'}
@@ -116,6 +137,44 @@
       {@html AzoriusWatermark}
       <p>8 cards to find</p>
     </div>
+    {#if currentState === 'gameInProgress'}
+      <div class="border p-4">
+        {#if showingOperativeView}
+          {#if gameState!.clue.word}
+            <h3>Current clue:</h3>
+            <p class="text-lg capitalize">{gameState!.clue.word} {gameState!.clue.number}</p>
+          {:else}
+            <h3 class="text-lg">Waiting for clue</h3>
+          {/if}
+        {:else if !gameState!.clue.word}
+          <h3 class="text-lg">Waiting for your clue</h3>
+          <form class="mt-2" onsubmit={handleSubmit}>
+            <input
+              type="text"
+              class="rounded-lg border border-slate-200 bg-transparent p-2"
+              placeholder="Enter your clue"
+              bind:value={clueBeingInput}
+            />
+            <select
+              class="focus:shadow-outline inline appearance-none rounded-lg border border-slate-200 bg-transparent px-4 py-2 pr-8 hover:border-slate-300 focus:outline-none"
+              bind:value={selectedNumber}
+            >
+              {#each NUMBER_OPTIONS as number}
+                <option>{number}</option>
+              {/each}
+            </select>
+            <button
+              class="mt-2 rounded border px-4 py-2 hover:border-slate-500 active:border-slate-400 active:text-slate-400"
+            >
+              Submit
+            </button>
+          </form>
+        {:else}
+          <h3>Current clue:</h3>
+          <p class="text-lg capitalize">{gameState!.clue.word} {gameState!.clue.number}</p>
+        {/if}
+      </div>
+    {/if}
   </div>
   <div class="grid grid-cols-5 gap-2">
     {#each gameState!.board as row}
