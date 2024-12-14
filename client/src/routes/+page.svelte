@@ -60,6 +60,10 @@
         if (message.game.status === 'inProgress') {
           currentState = 'gameInProgress';
         }
+
+        // TODO: add different messages on each guess for more information
+        // TODO: handle when the game gets the assassin and is finished
+
         gameState = message.game;
       }
     };
@@ -93,6 +97,11 @@
     );
     selectedNumber = null;
     clueBeingInput = '';
+  }
+
+  function guessCard(position: [number, number], name: string) {
+    if (!ws) return;
+    ws.send(JSON.stringify({ action: 'guessCard', position, name }));
   }
 </script>
 
@@ -131,11 +140,11 @@
     </div>
     <div class="border p-4">
       {@html RakdosWatermark}
-      <p>9 cards to find</p>
+      <p>{gameState?.cardsRemaining.rb} cards to find</p>
     </div>
     <div class="border p-4">
       {@html AzoriusWatermark}
-      <p>8 cards to find</p>
+      <p>{gameState?.cardsRemaining.uw} cards to find</p>
     </div>
     {#if currentState === 'gameInProgress'}
       <div class="border p-4">
@@ -177,13 +186,20 @@
     {/if}
   </div>
   <div class="grid grid-cols-5 gap-2">
-    {#each gameState!.board as row}
-      {#each row as space}
+    {#each gameState!.board as row, rowIndex}
+      {#each row as space, colIndex}
         <div class="rounded-lg border border-slate-200 p-8 hover:border-slate-400">
           <h4 class="mb-2 font-semibold">{space.word}</h4>
-          <p>flipped: {space.flipped}</p>
-          {#if !showingOperativeView}
+          {#if space.flipped || !showingOperativeView}
             <p>belongsTo: {space.identity}</p>
+          {/if}
+          {#if !space.flipped}
+            <button
+              class="mt-2 rounded border px-4 py-2 hover:border-slate-500 active:border-slate-400 active:text-slate-400"
+              onclick={() => guessCard([rowIndex, colIndex], space.word)}
+            >
+              Guess card
+            </button>
           {/if}
         </div>
       {/each}

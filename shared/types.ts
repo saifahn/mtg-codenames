@@ -21,6 +21,9 @@ export interface GameBaseState {
     word: string
     number: number | null
   }
+  cardsRemaining: {
+    [key in Team]: number
+  }
   // add logged in users and users by team
 }
 

@@ -83,6 +83,10 @@ function createNewGame() {
       word: '',
       number: null,
     },
+    cardsRemaining: {
+      uw: goesFirst === 'uw' ? 9 : 8,
+      rb: goesFirst === 'rb' ? 9 : 8,
+    },
   }
   state.game = game
 }
@@ -93,6 +97,50 @@ function startGame() {
     return
   }
   state.game.status = 'inProgress'
+}
+
+// how to handle errors?
+function guessCard(position: [number, number], name: string) {
+  if (state.game?.status !== 'inProgress') {
+    console.error('A card was guessed when there was no game in progress')
+    return
+  }
+  const targetCard = state.game.board[position[0]][position[1]]
+  if (targetCard.word !== name) {
+    console.error('The card guessed was not the card at the position given')
+    return
+  }
+  if (targetCard.flipped) {
+    console.error('The chosen card has already been chosen previously')
+    return
+  }
+  if (targetCard.identity === 'assassin') {
+    console.log(
+      `The assassin was chosen, ${state.game.currentTurn} has lost the game`
+    )
+    state.game.status = 'finished'
+    // server needs to send the new data
+    return
+  }
+
+  targetCard.flipped = true // this should happen no matter the next handling
+
+  const opposingTeam = state.game.currentTurn === 'uw' ? 'rb' : 'uw'
+
+  if (targetCard.identity === 'neutral') {
+    state.game.currentTurn = opposingTeam
+    // server needs to send the new data
+    return
+  }
+  if (targetCard.identity !== state.game.currentTurn) {
+    state.game.currentTurn = opposingTeam
+    state.game.cardsRemaining[opposingTeam] -= 1
+    // send a message that can be picked up so we can say: e.g. "uw guessed a rb card!"
+    return
+  }
+
+  state.game.cardsRemaining[state.game.currentTurn] -= 1
+  // send a message that can be picked up "correctly guessed!" or something?
 }
 
 const server = Bun.serve({
@@ -146,6 +194,16 @@ const server = Bun.serve({
           }
           console.log('clue was received', parsedMsg.clue)
           state.game.clue = parsedMsg.clue
+          server.publish('game', JSON.stringify(state))
+        }
+
+        if (action === 'guessCard') {
+          if (!state.game) {
+            console.error('guess action was received when there was no game')
+            return
+          }
+          console.log('guess was received', parsedMsg.position, parsedMsg.name)
+          guessCard(parsedMsg.position, parsedMsg.name)
           server.publish('game', JSON.stringify(state))
         }
       } catch (err) {
