@@ -119,6 +119,7 @@ function guessCard(position: [number, number], name: string) {
       `The assassin was chosen, ${state.game.currentTurn} has lost the game`
     )
     state.game.status = 'finished'
+    state.game.lastAction = 'assassinChosen'
     // server needs to send the new data
     return
   }

@@ -4,9 +4,9 @@
   import { onMount } from 'svelte';
   import { type GameState } from '../../../shared/types';
 
-  let currentState = $state<'loading' | 'noGame' | 'gameWaitingToBeStarted' | 'gameInProgress'>(
-    'loading'
-  );
+  let currentState = $state<
+    'loading' | 'noGame' | 'gameWaitingToBeStarted' | 'gameInProgress' | 'gameOver'
+  >('loading');
   let gameState = $state<GameState['game']>(null);
   let showingOperativeView = $state(true);
 
@@ -63,6 +63,10 @@
 
         // TODO: add different messages on each guess for more information
         // TODO: handle when the game gets the assassin and is finished
+
+        if (message.game.status === 'finished') {
+          currentState = 'gameOver';
+        }
 
         gameState = message.game;
       }
@@ -131,12 +135,16 @@
   {/if}
   <div class="mb-3 flex gap-4">
     <div class="border p-4">
-      {#if currentState === 'gameWaitingToBeStarted'}
-        <h3 class="text-lg">Goes first:</h3>
+      {#if gameState!.lastAction === 'assassinChosen'}
+        <h3 class="text-lg">{gameState?.currentTurn} has chosen the assassin and lost the game!</h3>
       {:else}
-        <h3 class="text-lg">Current turn:</h3>
+        {#if currentState === 'gameWaitingToBeStarted'}
+          <h3 class="text-lg">Goes first:</h3>
+        {:else}
+          <h3 class="text-lg">Current turn:</h3>
+        {/if}
+        {@html gameState!.currentTurn === 'rb' ? RakdosWatermark : AzoriusWatermark}
       {/if}
-      {@html gameState!.currentTurn === 'rb' ? RakdosWatermark : AzoriusWatermark}
     </div>
     <div class="border p-4">
       {@html RakdosWatermark}
@@ -193,7 +201,7 @@
           {#if space.flipped || !showingOperativeView}
             <p>belongsTo: {space.identity}</p>
           {/if}
-          {#if !space.flipped}
+          {#if gameState!.status === 'inProgress' && showingOperativeView && !space.flipped}
             <button
               class="mt-2 rounded border px-4 py-2 hover:border-slate-500 active:border-slate-400 active:text-slate-400"
               onclick={() => guessCard([rowIndex, colIndex], space.word)}
