@@ -4,9 +4,9 @@
   import { onMount } from 'svelte';
   import { type GameState } from '../../../shared/types';
 
-  let currentState = $state<'loading' | 'noGame' | 'gameWaitingToBeStarted' | 'gameInProgress'>(
-    'loading'
-  );
+  let currentState = $state<
+    'loading' | 'noGame' | 'gameWaitingToBeStarted' | 'gameInProgress' | 'gameOver'
+  >('loading');
   let gameState = $state<GameState['game']>(null);
   let showingOperativeView = $state(true);
 
@@ -60,6 +60,13 @@
         if (message.game.status === 'inProgress') {
           currentState = 'gameInProgress';
         }
+
+        // TODO: add different messages on each guess for more information
+
+        if (message.game.status === 'finished') {
+          currentState = 'gameOver';
+        }
+
         gameState = message.game;
       }
     };
@@ -94,6 +101,11 @@
     selectedNumber = null;
     clueBeingInput = '';
   }
+
+  function guessCard(position: [number, number], name: string) {
+    if (!ws) return;
+    ws.send(JSON.stringify({ action: 'guessCard', position, name }));
+  }
 </script>
 
 {#if currentState === 'loading'}
@@ -122,20 +134,28 @@
   {/if}
   <div class="mb-3 flex gap-4">
     <div class="border p-4">
-      {#if currentState === 'gameWaitingToBeStarted'}
-        <h3 class="text-lg">Goes first:</h3>
+      {#if gameState!.lastAction === 'assassinChosen'}
+        <h3 class="text-lg">{gameState?.currentTurn} has chosen the assassin and lost the game!</h3>
+      {:else if gameState!.lastAction === 'allOperativesFound'}
+        <h3 class="text-lg">
+          {gameState?.currentTurn} have found all of their cards and won the game!
+        </h3>
       {:else}
-        <h3 class="text-lg">Current turn:</h3>
+        {#if currentState === 'gameWaitingToBeStarted'}
+          <h3 class="text-lg">Goes first:</h3>
+        {:else}
+          <h3 class="text-lg">Current turn:</h3>
+        {/if}
+        {@html gameState!.currentTurn === 'rb' ? RakdosWatermark : AzoriusWatermark}
       {/if}
-      {@html gameState!.currentTurn === 'rb' ? RakdosWatermark : AzoriusWatermark}
     </div>
     <div class="border p-4">
       {@html RakdosWatermark}
-      <p>9 cards to find</p>
+      <p>{gameState?.cardsRemaining.rb} cards to find</p>
     </div>
     <div class="border p-4">
       {@html AzoriusWatermark}
-      <p>8 cards to find</p>
+      <p>{gameState?.cardsRemaining.uw} cards to find</p>
     </div>
     {#if currentState === 'gameInProgress'}
       <div class="border p-4">
@@ -177,13 +197,20 @@
     {/if}
   </div>
   <div class="grid grid-cols-5 gap-2">
-    {#each gameState!.board as row}
-      {#each row as space}
+    {#each gameState!.board as row, rowIndex}
+      {#each row as space, colIndex}
         <div class="rounded-lg border border-slate-200 p-8 hover:border-slate-400">
           <h4 class="mb-2 font-semibold">{space.word}</h4>
-          <p>flipped: {space.flipped}</p>
-          {#if !showingOperativeView}
+          {#if space.flipped || !showingOperativeView}
             <p>belongsTo: {space.identity}</p>
+          {/if}
+          {#if gameState!.status === 'inProgress' && showingOperativeView && !space.flipped}
+            <button
+              class="mt-2 rounded border px-4 py-2 hover:border-slate-500 active:border-slate-400 active:text-slate-400"
+              onclick={() => guessCard([rowIndex, colIndex], space.word)}
+            >
+              Guess card
+            </button>
           {/if}
         </div>
       {/each}

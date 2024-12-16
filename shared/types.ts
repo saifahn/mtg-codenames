@@ -12,6 +12,8 @@ export interface BoardSpace {
   flipped: boolean
 }
 
+export type DetailedAction = 'assassinChosen' | 'allOperativesFound' | null
+
 export interface GameBaseState {
   board: BoardSpace[][]
   goesFirst: Team
@@ -21,6 +23,10 @@ export interface GameBaseState {
     word: string
     number: number | null
   }
+  cardsRemaining: {
+    [key in Team]: number
+  }
+  lastAction?: DetailedAction
   // add logged in users and users by team
 }
 
