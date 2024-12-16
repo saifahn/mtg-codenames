@@ -126,21 +126,26 @@ function guessCard(position: [number, number], name: string) {
 
   targetCard.flipped = true // this should happen no matter the next handling
 
-  const opposingTeam = state.game.currentTurn === 'uw' ? 'rb' : 'uw'
+  const currentTeam = state.game.currentTurn
+  const opposingTeam = currentTeam === 'uw' ? 'rb' : 'uw'
 
   if (targetCard.identity === 'neutral') {
     state.game.currentTurn = opposingTeam
     // server needs to send the new data
     return
   }
-  if (targetCard.identity !== state.game.currentTurn) {
+  if (targetCard.identity !== currentTeam) {
     state.game.currentTurn = opposingTeam
     state.game.cardsRemaining[opposingTeam] -= 1
     // send a message that can be picked up so we can say: e.g. "uw guessed a rb card!"
     return
   }
 
-  state.game.cardsRemaining[state.game.currentTurn] -= 1
+  state.game.cardsRemaining[currentTeam] -= 1
+  if (state.game.cardsRemaining[currentTeam] === 0) {
+    state.game.status = 'finished'
+    state.game.lastAction = 'allOperativesFound'
+  }
   // send a message that can be picked up "correctly guessed!" or something?
 }
 

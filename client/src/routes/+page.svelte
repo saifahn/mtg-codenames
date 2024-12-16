@@ -62,7 +62,6 @@
         }
 
         // TODO: add different messages on each guess for more information
-        // TODO: handle when the game gets the assassin and is finished
 
         if (message.game.status === 'finished') {
           currentState = 'gameOver';
@@ -137,6 +136,10 @@
     <div class="border p-4">
       {#if gameState!.lastAction === 'assassinChosen'}
         <h3 class="text-lg">{gameState?.currentTurn} has chosen the assassin and lost the game!</h3>
+      {:else if gameState!.lastAction === 'allOperativesFound'}
+        <h3 class="text-lg">
+          {gameState?.currentTurn} have found all of their cards and won the game!
+        </h3>
       {:else}
         {#if currentState === 'gameWaitingToBeStarted'}
           <h3 class="text-lg">Goes first:</h3>

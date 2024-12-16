@@ -12,7 +12,7 @@ export interface BoardSpace {
   flipped: boolean
 }
 
-export type DetailedAction = 'assassinChosen' | null
+export type DetailedAction = 'assassinChosen' | 'allOperativesFound' | null
 
 export interface GameBaseState {
   board: BoardSpace[][]
