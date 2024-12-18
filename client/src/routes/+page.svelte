@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { PUBLIC_BACKEND_URL } from '$env/static/public';
   import AzoriusWatermark from '$lib/assets/azorius.svg?raw';
   import RakdosWatermark from '$lib/assets/rakdos.svg?raw';
   import { onMount } from 'svelte';
@@ -18,7 +19,7 @@
   let selectedNumber = $state();
 
   onMount(() => {
-    ws = new WebSocket('ws://localhost:3000');
+    ws = new WebSocket(PUBLIC_BACKEND_URL);
 
     if (!ws) return;
 
