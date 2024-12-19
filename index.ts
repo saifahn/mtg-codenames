@@ -129,24 +129,31 @@ function guessCard(position: [number, number], name: string) {
   const currentTeam = state.game.currentTurn
   const opposingTeam = currentTeam === 'uw' ? 'rb' : 'uw'
 
+  if (targetCard.identity === currentTeam) {
+    // send a message that can be picked up "correctly guessed!" or something?
+    state.game.cardsRemaining[currentTeam] -= 1
+    if (state.game.cardsRemaining[currentTeam] === 0) {
+      state.game.status = 'finished'
+      state.game.lastAction = 'allOperativesFound'
+    }
+    return
+  }
+
   if (targetCard.identity === 'neutral') {
     state.game.currentTurn = opposingTeam
     // server needs to send the new data
-    return
   }
   if (targetCard.identity !== currentTeam) {
     state.game.currentTurn = opposingTeam
     state.game.cardsRemaining[opposingTeam] -= 1
     // send a message that can be picked up so we can say: e.g. "uw guessed a rb card!"
-    return
   }
 
-  state.game.cardsRemaining[currentTeam] -= 1
-  if (state.game.cardsRemaining[currentTeam] === 0) {
-    state.game.status = 'finished'
-    state.game.lastAction = 'allOperativesFound'
-  }
-  // send a message that can be picked up "correctly guessed!" or something?
+  state.game.clue = { word: '', number: null }
+}
+
+function getCurrentGameState() {
+  return state.game
 }
 
 const server = Bun.serve({
@@ -177,6 +184,7 @@ const server = Bun.serve({
       try {
         const parsedMsg = JSON.parse(message)
         const { action } = parsedMsg
+        const gameState = getCurrentGameState()
 
         if (action === 'login') {
           console.log(`LOG: ${parsedMsg.username} has logged in`)
@@ -194,26 +202,31 @@ const server = Bun.serve({
         }
 
         if (action === 'submitClue') {
-          if (!state.game) {
+          if (!gameState) {
             console.error('clue action was received when there was no game')
             return
           }
-          console.log('clue was received', parsedMsg.clue)
-          state.game.clue = parsedMsg.clue
+
+          gameState.clue = parsedMsg.clue
           server.publish('game', JSON.stringify(state))
         }
 
         if (action === 'guessCard') {
-          if (!state.game) {
+          if (!gameState) {
             console.error('guess action was received when there was no game')
             return
           }
-          console.log('guess was received', parsedMsg.position, parsedMsg.name)
+
+          if (!gameState.clue.word || !gameState.clue.number) {
+            console.error('guess action was received when there was no clue')
+            return
+          }
+
           guessCard(parsedMsg.position, parsedMsg.name)
           server.publish('game', JSON.stringify(state))
         }
       } catch (err) {
-        console.log(err)
+        console.error(err)
       }
     },
   },
