@@ -178,6 +178,17 @@ function handleClueSubmission(clue: GameBaseState['clue']) {
   state.game.guessesRemaining = parseInt(clue.number, 10) + 1
 }
 
+function handlePassTurn() {
+  if (!state.game) {
+    console.error('Someone tried to pass the turn with no game in progress')
+    return
+  }
+
+  state.game.currentTurn = state.game.currentTurn === 'uw' ? 'rb' : 'uw'
+  state.game.guessesRemaining = 0
+  state.game.clue = { word: '', number: null }
+}
+
 function getCurrentGameState() {
   return state.game
 }
@@ -229,6 +240,11 @@ const server = Bun.serve({
 
         if (action === 'submitClue') {
           handleClueSubmission(parsedMsg.clue)
+          server.publish('game', JSON.stringify(state))
+        }
+
+        if (action === 'passTurn') {
+          handlePassTurn()
           server.publish('game', JSON.stringify(state))
         }
 
