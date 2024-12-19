@@ -83,6 +83,7 @@ function createNewGame() {
       word: '',
       number: null,
     },
+    guessesRemaining: 0,
     cardsRemaining: {
       uw: goesFirst === 'uw' ? 9 : 8,
       rb: goesFirst === 'rb' ? 9 : 8,
@@ -132,6 +133,11 @@ function guessCard(position: [number, number], name: string) {
   if (targetCard.identity === currentTeam) {
     // send a message that can be picked up "correctly guessed!" or something?
     state.game.cardsRemaining[currentTeam] -= 1
+    state.game.guessesRemaining -= 1
+    if (state.game.guessesRemaining === 0) {
+      state.game.clue = { word: '', number: null }
+      state.game.currentTurn = opposingTeam
+    }
     if (state.game.cardsRemaining[currentTeam] === 0) {
       state.game.status = 'finished'
       state.game.lastAction = 'allOperativesFound'
@@ -149,7 +155,27 @@ function guessCard(position: [number, number], name: string) {
     // send a message that can be picked up so we can say: e.g. "uw guessed a rb card!"
   }
 
+  state.game.guessesRemaining = 0
   state.game.clue = { word: '', number: null }
+}
+
+function handleClueSubmission(clue: GameBaseState['clue']) {
+  if (!state.game) {
+    console.error('A clue was submitted when there was no game')
+    return
+  }
+
+  if (clue.word === '' || clue.number === null) {
+    console.error('A clue was submitted without a word or number')
+    return
+  }
+
+  state.game.clue = clue
+  if (state.game.clue.number === '0' || state.game.clue.number === '∞') {
+    state.game.guessesRemaining = 999
+    return
+  }
+  state.game.guessesRemaining = parseInt(clue.number, 10) + 1
 }
 
 function getCurrentGameState() {
@@ -202,12 +228,7 @@ const server = Bun.serve({
         }
 
         if (action === 'submitClue') {
-          if (!gameState) {
-            console.error('clue action was received when there was no game')
-            return
-          }
-
-          gameState.clue = parsedMsg.clue
+          handleClueSubmission(parsedMsg.clue)
           server.publish('game', JSON.stringify(state))
         }
 

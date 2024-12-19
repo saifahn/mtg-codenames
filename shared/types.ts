@@ -21,8 +21,9 @@ export interface GameBaseState {
   status: 'ready' | 'inProgress' | 'finished'
   clue: {
     word: string
-    number: number | null
+    number: string | null
   }
+  guessesRemaining: number
   cardsRemaining: {
     [key in Team]: number
   }
