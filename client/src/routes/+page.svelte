@@ -205,7 +205,7 @@
           {#if space.flipped || !showingOperativeView}
             <p>belongsTo: {space.identity}</p>
           {/if}
-          {#if gameState!.status === 'inProgress' && showingOperativeView && !space.flipped}
+          {#if gameState!.status === 'inProgress' && gameState!.clue.word && showingOperativeView && !space.flipped}
             <button
               class="mt-2 rounded border px-4 py-2 hover:border-slate-500 active:border-slate-400 active:text-slate-400"
               onclick={() => guessCard([rowIndex, colIndex], space.word)}
