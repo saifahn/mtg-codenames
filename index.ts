@@ -83,6 +83,7 @@ function createNewGame() {
       word: '',
       number: null,
     },
+    guessesRemaining: 0,
     cardsRemaining: {
       uw: goesFirst === 'uw' ? 9 : 8,
       rb: goesFirst === 'rb' ? 9 : 8,
@@ -129,24 +130,67 @@ function guessCard(position: [number, number], name: string) {
   const currentTeam = state.game.currentTurn
   const opposingTeam = currentTeam === 'uw' ? 'rb' : 'uw'
 
+  if (targetCard.identity === currentTeam) {
+    // send a message that can be picked up "correctly guessed!" or something?
+    state.game.cardsRemaining[currentTeam] -= 1
+    state.game.guessesRemaining -= 1
+    if (state.game.guessesRemaining === 0) {
+      state.game.clue = { word: '', number: null }
+      state.game.currentTurn = opposingTeam
+    }
+    if (state.game.cardsRemaining[currentTeam] === 0) {
+      state.game.status = 'finished'
+      state.game.lastAction = 'allOperativesFound'
+    }
+    return
+  }
+
   if (targetCard.identity === 'neutral') {
     state.game.currentTurn = opposingTeam
     // server needs to send the new data
-    return
   }
   if (targetCard.identity !== currentTeam) {
     state.game.currentTurn = opposingTeam
     state.game.cardsRemaining[opposingTeam] -= 1
     // send a message that can be picked up so we can say: e.g. "uw guessed a rb card!"
+  }
+
+  state.game.guessesRemaining = 0
+  state.game.clue = { word: '', number: null }
+}
+
+function handleClueSubmission(clue: GameBaseState['clue']) {
+  if (!state.game) {
+    console.error('A clue was submitted when there was no game')
     return
   }
 
-  state.game.cardsRemaining[currentTeam] -= 1
-  if (state.game.cardsRemaining[currentTeam] === 0) {
-    state.game.status = 'finished'
-    state.game.lastAction = 'allOperativesFound'
+  if (clue.word === '' || clue.number === null) {
+    console.error('A clue was submitted without a word or number')
+    return
   }
-  // send a message that can be picked up "correctly guessed!" or something?
+
+  state.game.clue = clue
+  if (state.game.clue.number === '0' || state.game.clue.number === '∞') {
+    state.game.guessesRemaining = 999
+    return
+  }
+  state.game.guessesRemaining = parseInt(clue.number, 10) + 1
+}
+
+function handlePassTurn() {
+  if (!state.game) {
+    console.error('Someone tried to pass the turn with no game in progress')
+    return
+  }
+
+  state.game.currentTurn = state.game.currentTurn === 'uw' ? 'rb' : 'uw'
+  state.game.guessesRemaining = 0
+  state.game.clue = { word: '', number: null }
+}
+
+function getCurrentGameState() {
+  return state.game
 }
 
 const server = Bun.serve({
@@ -177,6 +221,7 @@ const server = Bun.serve({
       try {
         const parsedMsg = JSON.parse(message)
         const { action } = parsedMsg
+        const gameState = getCurrentGameState()
 
         if (action === 'login') {
           console.log(`LOG: ${parsedMsg.username} has logged in`)
@@ -194,26 +239,31 @@ const server = Bun.serve({
         }
 
         if (action === 'submitClue') {
-          if (!state.game) {
-            console.error('clue action was received when there was no game')
-            return
-          }
-          console.log('clue was received', parsedMsg.clue)
-          state.game.clue = parsedMsg.clue
+          handleClueSubmission(parsedMsg.clue)
+          server.publish('game', JSON.stringify(state))
+        }
+
+        if (action === 'passTurn') {
+          handlePassTurn()
           server.publish('game', JSON.stringify(state))
         }
 
         if (action === 'guessCard') {
-          if (!state.game) {
+          if (!gameState) {
             console.error('guess action was received when there was no game')
             return
           }
-          console.log('guess was received', parsedMsg.position, parsedMsg.name)
+
+          if (!gameState.clue.word || !gameState.clue.number) {
+            console.error('guess action was received when there was no clue')
+            return
+          }
+
           guessCard(parsedMsg.position, parsedMsg.name)
           server.publish('game', JSON.stringify(state))
         }
       } catch (err) {
-        console.log(err)
+        console.error(err)
       }
     },
   },

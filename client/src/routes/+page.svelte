@@ -99,13 +99,18 @@
         }
       })
     );
-    selectedNumber = null;
+    selectedNumber = '0';
     clueBeingInput = '';
   }
 
   function guessCard(position: [number, number], name: string) {
     if (!ws) return;
     ws.send(JSON.stringify({ action: 'guessCard', position, name }));
+  }
+
+  function passTurn() {
+    if (!ws) return;
+    ws.send(JSON.stringify({ action: 'passTurn' }));
   }
 </script>
 
@@ -164,6 +169,12 @@
           {#if gameState!.clue.word}
             <h3>Current clue:</h3>
             <p class="text-lg capitalize">{gameState!.clue.word} {gameState!.clue.number}</p>
+            <button
+              class="mt-2 rounded border px-4 py-2 hover:border-slate-500 active:border-slate-400 active:text-slate-400"
+              onclick={passTurn}
+            >
+              Pass turn
+            </button>
           {:else}
             <h3 class="text-lg">Waiting for clue</h3>
           {/if}
@@ -205,7 +216,7 @@
           {#if space.flipped || !showingOperativeView}
             <p>belongsTo: {space.identity}</p>
           {/if}
-          {#if gameState!.status === 'inProgress' && showingOperativeView && !space.flipped}
+          {#if gameState!.status === 'inProgress' && gameState!.clue.word && showingOperativeView && !space.flipped}
             <button
               class="mt-2 rounded border px-4 py-2 hover:border-slate-500 active:border-slate-400 active:text-slate-400"
               onclick={() => guessCard([rowIndex, colIndex], space.word)}
