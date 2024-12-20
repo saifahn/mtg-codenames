@@ -1,16 +1,10 @@
 <script lang="ts">
-  import { gameState, getWsConnection } from './gameState.svelte';
+  import { gameState, guessCard } from './gameState.svelte';
   let { spymasterView }: { spymasterView: boolean } = $props();
 
-  let showGuessCardButton = $derived(
+  const showGuessCardButton = $derived(
     gameState.game?.status === 'inProgress' && gameState.game?.clue.word && !spymasterView
   );
-
-  function guessCard(position: [number, number], name: string) {
-    const wsConnection = getWsConnection();
-    if (!wsConnection) return;
-    wsConnection.send(JSON.stringify({ action: 'guessCard', position, name }));
-  }
 </script>
 
 <div class="grid grid-cols-5 gap-2">

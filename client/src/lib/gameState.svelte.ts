@@ -4,10 +4,6 @@ import type { GameState } from '../../../shared/types';
 let wsConnection: WebSocket | undefined = $state();
 export const gameState: GameState = $state({ game: null });
 
-export function getGameState() {
-  return gameState;
-}
-
 function isGameState(jsonParsed: unknown): jsonParsed is GameState {
   if (!(typeof jsonParsed === 'object' && !!jsonParsed && 'game' in jsonParsed)) {
     return false;
@@ -15,7 +11,7 @@ function isGameState(jsonParsed: unknown): jsonParsed is GameState {
   return jsonParsed.game !== undefined;
 }
 
-function makeNewConnection() {
+export function wsConnect() {
   if (wsConnection) {
     console.log('connection already exists, skipping');
     return;
@@ -37,7 +33,6 @@ function makeNewConnection() {
       return;
     }
 
-    // TODO: validate with a package like zod?
     const message = JSON.parse(event.data);
 
     if (isGameState(message)) {
@@ -51,9 +46,47 @@ function makeNewConnection() {
   };
 }
 
-export function getWsConnection() {
+function getWsConnection() {
   if (!wsConnection) {
-    makeNewConnection();
+    wsConnect();
   }
   return wsConnection;
+}
+
+export function createNewGame() {
+  const wsConnection = getWsConnection();
+  if (!wsConnection) return;
+  wsConnection.send(JSON.stringify({ action: 'createNewGame' }));
+}
+
+export function startGame() {
+  const wsConnection = getWsConnection();
+  if (!wsConnection) return;
+  wsConnection.send(JSON.stringify({ action: 'startGame' }));
+}
+
+export function passTurn() {
+  const wsConnection = getWsConnection();
+  if (!wsConnection) return;
+  wsConnection.send(JSON.stringify({ action: 'passTurn' }));
+}
+
+export function submitClue(word: string, number: string) {
+  const wsConnection = getWsConnection();
+  if (!wsConnection) return;
+  wsConnection.send(
+    JSON.stringify({
+      action: 'submitClue',
+      clue: {
+        word,
+        number
+      }
+    })
+  );
+}
+
+export function guessCard(position: [number, number], name: string) {
+  const wsConnection = getWsConnection();
+  if (!wsConnection) return;
+  wsConnection.send(JSON.stringify({ action: 'guessCard', position, name }));
 }

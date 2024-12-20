@@ -2,79 +2,40 @@
   import MirranWatermark from '$lib/assets/mirran.svg?raw';
   import PhyrexianWatermark from '$lib/assets/phyrexian.svg?raw';
   import { onMount } from 'svelte';
-  import { gameState, getWsConnection } from '$lib/gameState.svelte';
+  import { gameState, wsConnect, createNewGame, passTurn, submitClue } from '$lib/gameState.svelte';
   import Board from '$lib/board.svelte';
+  import WelcomeScreen from '$lib/welcomeScreen.svelte';
+  import GameReadyScreen from '$lib/gameReadyScreen.svelte';
 
   let isLoading = $state(true);
   let showingOperativeView = $state(true);
   let wsConnection: WebSocket | undefined = $state();
 
-  const NUMBER_OPTIONS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '∞'];
+  const NUMBER_OPTIONS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '∞'] as const;
 
   let clueBeingInput = $state('');
-  let selectedNumber = $state();
+  let selectedNumber: (typeof NUMBER_OPTIONS)[number] = $state('0');
 
   onMount(() => {
-    wsConnection = getWsConnection();
+    wsConnect();
     isLoading = false;
   });
 
-  function createNewGame() {
-    if (!wsConnection) return;
-    wsConnection.send(JSON.stringify({ action: 'createNewGame' }));
-  }
-
-  function startGame() {
-    if (!wsConnection) return;
-    wsConnection.send(JSON.stringify({ action: 'startGame' }));
-  }
-
   function handleSubmit(e: Event) {
     e.preventDefault();
-    if (!wsConnection) return;
-    wsConnection.send(
-      JSON.stringify({
-        action: 'submitClue',
-        clue: {
-          word: clueBeingInput,
-          number: selectedNumber
-        }
-      })
-    );
+    submitClue(clueBeingInput, selectedNumber);
     selectedNumber = '0';
     clueBeingInput = '';
-  }
-
-  function passTurn() {
-    if (!wsConnection) return;
-    wsConnection.send(JSON.stringify({ action: 'passTurn' }));
   }
 </script>
 
 {#if isLoading}
   <p>Loading...</p>
 {:else if gameState.game === null}
-  <div class="mb-4 flex items-center gap-2 bg-slate-200 p-4 dark:bg-slate-700">
-    <p class="flex-grow">
-      There is no game currently in progress. Would you like to create a new game?
-    </p>
-    <button
-      class="rounded-md bg-sky-200 px-4 py-2 hover:bg-sky-300 active:bg-sky-100 dark:bg-sky-700 dark:hover:bg-sky-800 dark:active:bg-sky-600"
-      onclick={createNewGame}>Create game</button
-    >
-  </div>
+  <WelcomeScreen />
+{:else if gameState.game.status === 'ready'}
+  <GameReadyScreen />
 {:else}
-  {#if gameState.game.status === 'ready'}
-    <div class="mb-4 flex items-center gap-2 bg-slate-200 p-4 dark:bg-slate-700">
-      <p class="flex-grow">There is a game waiting to be started. Would you like to begin?</p>
-      <button
-        onclick={startGame}
-        class="rounded-md bg-sky-200 px-4 py-2 hover:bg-sky-300 active:bg-sky-100 dark:bg-sky-700 dark:hover:bg-sky-800 dark:active:bg-sky-600"
-      >
-        Start game
-      </button>
-    </div>
-  {/if}
   <div class="mb-3 flex gap-4">
     <div class="border p-4">
       {#if gameState.game.lastAction === 'assassinChosen'}
@@ -86,17 +47,12 @@
           {gameState.game.currentTurn} have found all of their cards and won the game
         </h3>
       {:else}
-        {#if gameState.game.status === 'ready'}
-          <h3 class="text-lg">Goes first:</h3>
-        {:else}
-          <h3 class="text-lg">Current turn:</h3>
-        {/if}
+        <h3 class="text-lg">Current turn:</h3>
         {@html gameState.game.currentTurn === 'mirran' ? MirranWatermark : PhyrexianWatermark}
       {/if}
     </div>
     <div class="border p-4">
       <span>{@html MirranWatermark}</span>
-
       <p>{gameState.game.cardsRemaining.mirran} cards to find</p>
     </div>
     <div class="border p-4">
