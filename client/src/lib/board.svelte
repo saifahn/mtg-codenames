@@ -1,0 +1,35 @@
+<script lang="ts">
+  import { gameState, getWsConnection } from './gameState.svelte';
+  let { spymasterView }: { spymasterView: boolean } = $props();
+
+  let showGuessCardButton = $derived(
+    gameState.game?.status === 'inProgress' && gameState.game?.clue.word && !spymasterView
+  );
+
+  function guessCard(position: [number, number], name: string) {
+    const wsConnection = getWsConnection();
+    if (!wsConnection) return;
+    wsConnection.send(JSON.stringify({ action: 'guessCard', position, name }));
+  }
+</script>
+
+<div class="grid grid-cols-5 gap-2">
+  {#each gameState.game!.board as row, rowIndex}
+    {#each row as card, colIndex}
+      <div class="rounded-lg border border-slate-200 p-8 hover:border-slate-400">
+        <h4 class="mb-2 font-semibold">{card.word}</h4>
+        {#if card.flipped || spymasterView}
+          belongs to {card.identity}
+        {/if}
+        {#if showGuessCardButton && !card.flipped}
+          <button
+            class="mt-2 rounded border px-4 py-2 hover:border-slate-500 active:border-slate-400 active:text-slate-400"
+            onclick={() => guessCard([rowIndex, colIndex], card.word)}
+          >
+            Guess card
+          </button>
+        {/if}
+      </div>
+    {/each}
+  {/each}
+</div>
