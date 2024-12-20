@@ -3,9 +3,13 @@
   import PhyrexianWatermark from '$lib/assets/phyrexian.svg?raw';
   import type { Team } from '../../../shared/types';
 
-  const { team }: { team: Team } = $props();
+  const { team }: { team: Team | 'assassin' | 'neutral' } = $props();
 </script>
 
-<span>
-  {@html team === 'mirran' ? MirranWatermark : PhyrexianWatermark}
-</span>
+{#if team === 'mirran'}
+  {@html MirranWatermark}
+{:else if team === 'phyrexian'}
+  {@html PhyrexianWatermark}
+{:else}
+  {team}
+{/if}

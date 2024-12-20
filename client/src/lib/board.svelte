@@ -1,5 +1,6 @@
 <script lang="ts">
   import { gameState, guessCard } from './gameState.svelte';
+  import TeamLogo from './teamLogo.svelte';
   let { spymasterView }: { spymasterView: boolean } = $props();
 
   const showGuessCardButton = $derived(
@@ -13,7 +14,9 @@
       <div class="rounded-lg border border-slate-200 p-8 hover:border-slate-400">
         <h4 class="mb-2 font-semibold">{card.word}</h4>
         {#if card.flipped || spymasterView}
-          belongs to {card.identity}
+          <span class="flex w-12">
+            <TeamLogo team={card.identity} />
+          </span>
         {/if}
         {#if showGuessCardButton && !card.flipped}
           <button
