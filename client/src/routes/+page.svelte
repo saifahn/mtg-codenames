@@ -1,7 +1,7 @@
 <script lang="ts">
   import { PUBLIC_BACKEND_URL } from '$env/static/public';
-  import AzoriusWatermark from '$lib/assets/azorius.svg?raw';
-  import RakdosWatermark from '$lib/assets/rakdos.svg?raw';
+  import MirranWatermark from '$lib/assets/mirran.svg?raw';
+  import PhyrexianWatermark from '$lib/assets/phyrexian.svg?raw';
   import { onMount } from 'svelte';
   import { type GameState } from '../../../shared/types';
 
@@ -152,16 +152,17 @@
         {:else}
           <h3 class="text-lg">Current turn:</h3>
         {/if}
-        {@html gameState!.currentTurn === 'rb' ? RakdosWatermark : AzoriusWatermark}
+        {@html gameState!.currentTurn === 'mirran' ? MirranWatermark : PhyrexianWatermark}
       {/if}
     </div>
     <div class="border p-4">
-      {@html RakdosWatermark}
-      <p>{gameState?.cardsRemaining.rb} cards to find</p>
+      <span>{@html MirranWatermark}</span>
+
+      <p>{gameState?.cardsRemaining.mirran} cards to find</p>
     </div>
     <div class="border p-4">
-      {@html AzoriusWatermark}
-      <p>{gameState?.cardsRemaining.uw} cards to find</p>
+      <span>{@html PhyrexianWatermark}</span>
+      <p>{gameState?.cardsRemaining.phyrexian} cards to find</p>
     </div>
     {#if currentState === 'gameInProgress'}
       <div class="border p-4">
